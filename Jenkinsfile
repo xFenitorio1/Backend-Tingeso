@@ -22,6 +22,8 @@ pipeline {
         stage('Compilar y Probar (Maven)') {
             steps {
                 // Ejecuta los tests antes de construir la imagen
+                sh 'chmod +x mvnw'
+
                 sh './mvnw clean test'
             }
         }
