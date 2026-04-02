@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     triggers {
-        // Revisa GitHub cada 2 minutos (ajusta según prefieras)
         pollSCM 'H/2 * * * *' 
     }
 
@@ -14,7 +13,6 @@ pipeline {
     stages {
         stage('Descargar Código') {
             steps {
-                // Esto descarga tu rama principal
                 checkout scm
             }
         }
@@ -32,7 +30,6 @@ pipeline {
             steps {
                 script {
                     echo "--> Construyendo imagen del Backend..."
-                    // NO usamos --no-cache para que sea rápido
                     sh "docker build -t ${BACKEND_IMAGE} ."
                 }
             }
@@ -40,18 +37,22 @@ pipeline {
 
         stage('Desplegar Localmente') {
             steps {
-                script {
-                    echo "--> Actualizando el contenedor en Docker Compose..."
-                    // Solo refresca el servicio 'backend' definido en tu docker-compose.yml
-                    // El flag --no-deps evita que se reinicie la base de datos
-                    sh "docker-compose -f ../docker-compose.yml up -d --build --no-deps backend"
+                // Esto "conecta" tus secretos de Jenkins con variables que el comando sh puede usar
+                withCredentials([
+                    string(credentialsId: 'db-user', variable: 'DB_USER'),
+                    string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
+                ]) {
+                    script {
+                        echo "--> Actualizando el contenedor de forma segura..."
+                        // Las variables $DB_USER y $DB_PASSWORD llenarán los huecos ${...} del docker-compose.yml
+                        sh "docker-compose up -d --build --no-deps backend"
+                    }
                 }
             }
         }
 
         stage('Limpieza') {
             steps {
-                // Borra imágenes viejas sin nombre para no llenar el disco
                 sh 'docker image prune -f'
             }
         }
