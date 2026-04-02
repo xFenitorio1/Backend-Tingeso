@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: tingeso
     ports:
-      - "5432:5432"
+      - "5433:5433"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,7 +19,7 @@ services:
   backend:
     build: .
     ports:
-      - "8020:8020"
+      - "8021:8021"
     depends_on:
       database:
         condition: service_healthy
