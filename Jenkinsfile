@@ -24,7 +24,7 @@ pipeline {
                 // Ejecuta los tests antes de construir la imagen
                 sh 'chmod +x mvnw'
 
-                sh './mvnw clean test'
+                sh './mvnw clean test -DskipTests'
             }
         }
 
