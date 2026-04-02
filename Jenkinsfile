@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         // Nombre de tu imagen local
-        BACKEND_IMAGE = 'tbd-backend:latest'
+        BACKEND_IMAGE = 'backend:latest'
     }
 
     stages {
