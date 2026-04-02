@@ -37,15 +37,16 @@ pipeline {
 
         stage('Desplegar Localmente') {
             steps {
-                // Esto "conecta" tus secretos de Jenkins con variables que el comando sh puede usar
                 withCredentials([
                     string(credentialsId: 'db-user', variable: 'DB_USER'),
                     string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
                 ]) {
                     script {
-                        echo "--> Actualizando el contenedor de forma segura..."
-                        // Las variables $DB_USER y $DB_PASSWORD llenarán los huecos ${...} del docker-compose.yml
-                        sh "docker-compose up -d --build --no-deps backend"
+                        echo "--> Limpiando contenedores antiguos y liberando puertos..."
+                        sh "docker-compose down --remove-orphans"
+
+                        echo "--> Levantando nueva versión..."
+                        sh "docker-compose up -d --build"
                     }
                 }
             }
