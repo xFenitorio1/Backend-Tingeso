@@ -44,7 +44,7 @@ pipeline {
                     echo "--> Actualizando el contenedor en Docker Compose..."
                     // Solo refresca el servicio 'backend' definido en tu docker-compose.yml
                     // El flag --no-deps evita que se reinicie la base de datos
-                    sh "cd .. && docker compose up -d --no-deps backend"
+                    sh "cd .. && docker-compose up -d --no-deps backend"
                 }
             }
         }
