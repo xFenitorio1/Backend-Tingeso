@@ -25,9 +25,11 @@ public class User {
 
     private String phone;
     
-    private String documentId;
+    @Column(unique = true)
+    private String keycloakId;
 
-    @Column(nullable = false)
+    private String documentId;
+    
     private String password;
 
     @Builder.Default
