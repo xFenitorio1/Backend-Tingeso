@@ -1,5 +1,6 @@
 package org.example.tingesoback.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.tingesoback.dto.UserRole;
@@ -38,5 +39,6 @@ public class User {
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @JsonIgnore
     private List<Booking> bookings;
 }
