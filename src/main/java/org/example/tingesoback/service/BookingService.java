@@ -1,5 +1,6 @@
 package org.example.tingesoback.service;
 
+import org.example.tingesoback.dto.BookingResponseDTO;
 import org.example.tingesoback.dto.BookingStatus;
 import org.example.tingesoback.entity.Booking;
 import org.example.tingesoback.entity.TravelPackage;
@@ -77,6 +78,10 @@ public class BookingService {
         return bookingRepository.findById(id);
     }
 
+    public List<Booking> getBookingsByEmail(String email) {
+        return bookingRepository.findByCustomerEmail(email);
+    }
+
     /**
      * Actualiza una reserva. Nota: Si cambia el passengerCount,
      * se debería ajustar el cupo del paquete (Lógica omitida por brevedad, pero recomendada).
@@ -135,4 +140,24 @@ public class BookingService {
         booking.setTotalDiscount(subtotal * discountPct);
         booking.setFinalAmount(subtotal - booking.getTotalDiscount());
     }
+
+    public List<BookingResponseDTO> getBookingsDTOByCustomerEmail(String email) {
+
+        User customer = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + email));
+
+        return bookingRepository.findByCustomer(customer)
+                .stream()
+                .map(b -> BookingResponseDTO.builder()
+                        .id(b.getId())
+                        .packageName(b.getTravelPackage().getName())
+                        .destination(b.getTravelPackage().getDestination())
+                        .startDate(b.getTravelPackage().getStartDate())
+                        .finalAmount(b.getFinalAmount())
+                        .status(b.getStatus())
+                        .build())
+                .toList();
+    }
+
+
 }

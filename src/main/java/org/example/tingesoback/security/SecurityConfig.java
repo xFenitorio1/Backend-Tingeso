@@ -29,6 +29,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // CSRF is not needed for stateless JWT APIs
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/public/**").permitAll() // Example public paths
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/packages/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

@@ -1,9 +1,13 @@
 package org.example.tingesoback.controller;
 
+import org.example.tingesoback.dto.BookingResponseDTO;
 import org.example.tingesoback.entity.Booking;
 import org.example.tingesoback.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,5 +54,13 @@ public class BookingController {
     public ResponseEntity<Void> deleteBooking(@PathVariable Long id) {
         bookingService.deleteBooking(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/my-bookings")
+    public ResponseEntity<?> getMyBookings(@AuthenticationPrincipal Jwt jwt) {
+        String email = jwt.getClaim("email");
+        System.out.println(jwt.getClaims());
+
+        return ResponseEntity.ok(bookingService.getBookingsByEmail(email));
     }
 }
