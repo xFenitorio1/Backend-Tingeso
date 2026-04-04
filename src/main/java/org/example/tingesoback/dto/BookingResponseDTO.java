@@ -1,17 +1,19 @@
 package org.example.tingesoback.dto;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.util.List;
 
 @Data
-@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BookingResponseDTO {
     private Long id;
-    private String packageName;
-    private String destination;
-    private LocalDate startDate;
     private Double finalAmount;
-    private BookingStatus status;
+    private Double totalDiscount;
+    private Integer passengerCount;
+    private Double basePrice;
+    private List<String> discountDetails;
 }

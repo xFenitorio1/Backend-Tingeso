@@ -2,7 +2,7 @@ package org.example.tingesoback.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "promotions")
@@ -18,6 +18,7 @@ public class Promotion {
     private String name;
     private Double discountPercentage;
     
-    private LocalDate validFrom;
-    private LocalDate validTo;
+    private LocalDateTime validFrom;
+    private LocalDateTime validTo;
+    private boolean active;
 }

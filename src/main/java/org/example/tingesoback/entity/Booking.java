@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.example.tingesoback.dto.BookingStatus;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity

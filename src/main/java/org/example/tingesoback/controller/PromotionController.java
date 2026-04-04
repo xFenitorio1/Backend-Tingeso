@@ -51,4 +51,14 @@ public class PromotionController {
         promotionService.deletePromotion(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Promotion> toggleStatus(@PathVariable Long id) {
+        try {
+            Promotion updatedPromo = promotionService.togglePromotionStatus(id);
+            return ResponseEntity.ok(updatedPromo);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

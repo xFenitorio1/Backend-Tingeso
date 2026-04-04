@@ -39,7 +39,17 @@ public class PromotionService {
             promo.setValidFrom(details.getValidFrom());
             promo.setValidTo(details.getValidTo());
             return promotionRepository.save(promo);
-        }).orElseThrow(() -> new RuntimeException("Promotion not found"));
+        }).orElseThrow(() -> new RuntimeException("Promocion no encontrada"));
+    }
+
+    public Promotion togglePromotionStatus(Long id) {
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Promoción no encontrada con ID: " + id));
+
+        promotion.setActive(!promotion.isActive());
+
+        // 3. Guardar cambios
+        return promotionRepository.save(promotion);
     }
 
     public void deletePromotion(Long id) {

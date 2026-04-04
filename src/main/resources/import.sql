@@ -11,8 +11,8 @@ INSERT INTO travel_packages (name, destination, description, start_date, end_dat
 INSERT INTO travel_packages (name, destination, description, start_date, end_date, price, total_capacity, available_spots, status) VALUES ('Fin de Semana Romántico', 'París, Francia', '3 días espectaculares en la ciudad del amor.', '2026-05-20', '2026-05-23', 650.00, 15, 15, 'AVAILABLE');
 
 -- 3. POBLAR PROMOCIONES (promotions)
-INSERT INTO promotions (name, discount_percentage, valid_from, valid_to) VALUES ('Verano Anticipado', 15.00, '2026-04-01', '2026-05-01');
-INSERT INTO promotions (name, discount_percentage, valid_from, valid_to) VALUES ('Mes del amor', 20.00, '2026-02-01', '2026-02-28');
+INSERT INTO promotions (name, discount_percentage, valid_from, valid_to, active) VALUES ('Verano Anticipado', 0.15, '2026-04-01', '2026-05-01', true);
+INSERT INTO promotions (name, discount_percentage, valid_from, valid_to, active) VALUES ('Mes del amor', 0.2, '2026-02-01', '2026-02-28', false);
 
 -- 4. POBLAR RESERVAS (bookings)
 -- Se crea una reserva para Juan (customer_id=2) en Cancún (travel_package_id=1)

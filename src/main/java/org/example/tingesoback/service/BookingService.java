@@ -4,9 +4,11 @@ import org.example.tingesoback.dto.BookingResponseDTO;
 import org.example.tingesoback.dto.BookingStatus;
 import org.example.tingesoback.dto.UserRole;
 import org.example.tingesoback.entity.Booking;
+import org.example.tingesoback.entity.Promotion;
 import org.example.tingesoback.entity.TravelPackage;
 import org.example.tingesoback.entity.User;
 import org.example.tingesoback.repository.BookingRepository;
+import org.example.tingesoback.repository.PromotionRepository;
 import org.example.tingesoback.repository.TravelPackageRepository;
 import org.example.tingesoback.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,17 +27,21 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final TravelPackageRepository travelPackageRepository;
+    private final PromotionRepository promotionRepository;
 
     @Autowired
     public BookingService(BookingRepository bookingRepository,
                           UserRepository userRepository,
-                          TravelPackageRepository travelPackageRepository) {
+                          TravelPackageRepository travelPackageRepository,
+                          PromotionRepository promotionRepository) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.travelPackageRepository = travelPackageRepository;
+        this.promotionRepository = promotionRepository;
     }
 
-    public Booking createBooking(Booking booking) {
+    @Transactional
+    public BookingResponseDTO createBooking(Booking booking) {
         // 1. Validar existencia del Cliente
         if (booking.getCustomer() == null || booking.getCustomer().getId() == null) {
             throw new RuntimeException("ID de cliente es obligatorio");
@@ -49,7 +56,7 @@ public class BookingService {
         TravelPackage pkg = travelPackageRepository.findById(booking.getTravelPackage().getId())
                 .orElseThrow(() -> new RuntimeException("Paquete turístico no encontrado"));
 
-        // 3. REGLA: Validar disponibilidad de cupos (Punto 3.2.4)
+        // 3. REGLA: Validar disponibilidad de cupos
         if (pkg.getAvailableSpots() < booking.getPassengerCount()) {
             throw new RuntimeException("No hay cupos suficientes. Disponibles: " + pkg.getAvailableSpots());
         }
@@ -61,14 +68,18 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING_PAYMENT);
         booking.setCreatedAt(LocalDateTime.now());
 
-        // 5. Aplicar lógica de montos y descuentos
+        // 5. Aplicar lógica de montos y descuentos (Cálculo Numérico)
         calculateFinalAmount(booking);
 
-        // 6. REGLA: Descontar cupos del paquete (Punto 3.2.4)
+        // 6. REGLA: Descontar cupos del paquete
         pkg.setAvailableSpots(pkg.getAvailableSpots() - booking.getPassengerCount());
         travelPackageRepository.save(pkg);
 
-        return bookingRepository.save(booking);
+        // 7. Guardar Reserva en DB
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // 8. Construir DTO de respuesta con los detalles de descuento para el Front
+        return convertToDTO(savedBooking);
     }
 
     public List<Booking> getAllBookings() {
@@ -81,6 +92,37 @@ public class BookingService {
 
     public List<Booking> getBookingsByEmail(String email) {
         return bookingRepository.findByCustomerEmail(email);
+    }
+
+
+    private BookingResponseDTO convertToDTO(Booking booking) {
+        BookingResponseDTO dto = new BookingResponseDTO();
+        dto.setId(booking.getId());
+        dto.setFinalAmount(booking.getFinalAmount());
+        dto.setTotalDiscount(booking.getTotalDiscount());
+        dto.setPassengerCount(booking.getPassengerCount());
+        dto.setBasePrice(booking.getBasePrice());
+
+        List<String> details = new ArrayList<>();
+        double subtotal = booking.getBasePrice() * booking.getPassengerCount();
+
+        if (booking.getPassengerCount() >= 4) {
+            details.add("10% - Descuento por grupo (4 o más personas)");
+        }
+
+        // Si el ahorro es mayor al 10%, significa que se sumó el de fidelidad
+        if (booking.getTotalDiscount() > (subtotal * 0.10) + 1.0) {
+            details.add("5% - Beneficio Cliente Frecuente (Viaje en los últimos 30 días)");
+        }
+        List<Promotion> activePromos = promotionRepository.findActivePromotions(LocalDateTime.now());
+        for (Promotion p : activePromos) {
+            details.add((p.getDiscountPercentage() * 100) + "% - " + p.getName());
+        }
+        System.out.println("Descuento promo:" + activePromos);
+        System.out.println("Descuento final:" + details);
+
+        dto.setDiscountDetails(details);
+        return dto;
     }
 
     /**
@@ -109,7 +151,7 @@ public class BookingService {
     }
 
     /**
-     * Lógica de Descuentos Acumulables (Punto 3.2.4 de la pauta)
+     * Lógica de Descuentos Acumulables
      */
     private void calculateFinalAmount(Booking booking) {
         if (booking.getPassengerCount() == null || booking.getBasePrice() == null) return;
@@ -117,25 +159,44 @@ public class BookingService {
         double subtotal = booking.getBasePrice() * booking.getPassengerCount();
         double discountPct = 0.0;
 
-        // REGLA: Descuento por cantidad de personas (>= 4 personas)
+        // 1. Descuento por grupo
         if (booking.getPassengerCount() >= 4) {
-            discountPct += 0.10; // 10% de ejemplo
+            discountPct += 0.10;
         }
 
-        // REGLA: Descuento por cliente frecuente (>= 3 reservas PAGADAS)
-        User customer = booking.getCustomer();
-        if (customer != null && customer.getBookings() != null) {
-            long paidCount = customer.getBookings().stream()
-                    .filter(b -> BookingStatus.PAID.equals(b.getStatus()))
-                    .count();
-            if (paidCount >= 3) {
-                discountPct += 0.10; // 10% adicional
-            }
+        // Buscamos si existen reservas PAGADAS del mismo cliente en los últimos 30 días
+        LocalDateTime haceUnMes = LocalDateTime.now().minusDays(30);
+
+        long reservasPagadas = bookingRepository.countByCustomerAndStatus(
+                booking.getCustomer(),
+                BookingStatus.PAID
+        );
+        if (reservasPagadas >= 3) {
+            discountPct += 0.05; // 5% de descuento por fidelidad
         }
 
-        // REGLA: Límite máximo de descuento permitido (20% del total)
-        if (discountPct > 0.20) {
-            discountPct = 0.20;
+        //Descuento cliente frecuente
+        boolean esRecurrente = bookingRepository.existsByCustomerAndStatusAndCreatedAtAfter(
+                booking.getCustomer(),
+                BookingStatus.PAID,
+                haceUnMes
+        );
+
+        if (esRecurrente) {
+            discountPct += 0.05; // 5% adicional por cliente recurrente
+        }
+
+        //Descuento por promoción
+        List<Promotion> activePromos = promotionRepository.findActivePromotions(LocalDateTime.now());
+
+        for (Promotion promo : activePromos) {
+            discountPct += promo.getDiscountPercentage();
+            // Opcional: podrías querer guardar qué promo se aplicó
+        }
+
+        // 3. Límite máximo de descuento (ejemplo 25%)
+        if (discountPct > 0.25) {
+            discountPct = 0.25;
         }
 
         booking.setTotalDiscount(subtotal * discountPct);
