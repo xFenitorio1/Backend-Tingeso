@@ -1,11 +1,11 @@
 package org.example.tingesoback.controller;
 
-import org.example.tingesoback.dto.BookingResponseDTO;
 import org.example.tingesoback.entity.Booking;
+import org.example.tingesoback.entity.User;
 import org.example.tingesoback.service.BookingService;
+import org.example.tingesoback.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +18,27 @@ import java.util.List;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final UserService userService;
+
 
     @Autowired
-    public BookingController(BookingService bookingService) {
+    public BookingController(BookingService bookingService, UserService userService) {
         this.bookingService = bookingService;
+        this.userService = userService;
     }
 
     @PostMapping
-    public ResponseEntity<Booking> createBooking(@RequestBody Booking booking) {
+    public ResponseEntity<Booking> createBooking(
+            @RequestBody Booking booking,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        String email = jwt.getClaimAsString("email");
+
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no sincronizado"));
+
+        booking.setCustomer(user);
+
         return ResponseEntity.ok(bookingService.createBooking(booking));
     }
 

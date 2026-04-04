@@ -2,6 +2,7 @@ package org.example.tingesoback.service;
 
 import org.example.tingesoback.dto.BookingResponseDTO;
 import org.example.tingesoback.dto.BookingStatus;
+import org.example.tingesoback.dto.UserRole;
 import org.example.tingesoback.entity.Booking;
 import org.example.tingesoback.entity.TravelPackage;
 import org.example.tingesoback.entity.User;
@@ -32,7 +33,7 @@ public class BookingService {
         this.userRepository = userRepository;
         this.travelPackageRepository = travelPackageRepository;
     }
-    
+
     public Booking createBooking(Booking booking) {
         // 1. Validar existencia del Cliente
         if (booking.getCustomer() == null || booking.getCustomer().getId() == null) {
