@@ -1,5 +1,6 @@
 package org.example.tingesoback.controller;
 
+import org.example.tingesoback.dto.BookingAdminDTO;
 import org.example.tingesoback.dto.BookingResponseDTO;
 import org.example.tingesoback.dto.BookingStatus;
 import org.example.tingesoback.entity.Booking;
@@ -57,9 +58,21 @@ public class    BookingController {
         return ResponseEntity.ok(bookingService.createBooking(booking));
     }
 
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        BookingStatus status = BookingStatus.valueOf(body.get("status"));
+        bookingService.updateBookingStatus(id, status);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping
     public ResponseEntity<List<Booking>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
+    }
+
+    @GetMapping("/admin/all")
+    public ResponseEntity<List<BookingAdminDTO>> getAllAdminBookings() {
+        return ResponseEntity.ok(bookingService.getAllBookingsForAdmin());
     }
 
     @GetMapping("/check-fidelity")

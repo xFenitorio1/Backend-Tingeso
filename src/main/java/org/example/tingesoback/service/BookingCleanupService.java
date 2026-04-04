@@ -22,8 +22,9 @@ public class BookingCleanupService {
     @Autowired
     private TravelPackageRepository travelPackageRepository;
 
+    /*
     // Se ejecuta cada 5 minutos (300,000 milisegundos)
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 300000)
     @Transactional
     public void releaseExpiredBookings() {
         // Para la prueba: Considerar expiradas las creadas hace más de 1 minuto
@@ -53,4 +54,5 @@ public class BookingCleanupService {
             System.out.println("RESUMEN: Reserva ID " + booking.getId() + " expirada. Cupos devueltos: " + booking.getPassengerCount() + ". Total paquete: " + nuevosCupos);
         }
     }
+     */
 }

@@ -1,5 +1,6 @@
 package org.example.tingesoback.service;
 
+import org.example.tingesoback.dto.BookingAdminDTO;
 import org.example.tingesoback.dto.BookingResponseDTO;
 import org.example.tingesoback.dto.BookingStatus;
 import org.example.tingesoback.dto.UserRole;
@@ -125,6 +126,10 @@ public class BookingService {
         return dto;
     }
 
+    public List<BookingAdminDTO> getAllBookingsForAdmin() {
+        return bookingRepository.findAllBookingsForAdmin();
+    }
+
     /**
      * Actualiza una reserva. Nota: Si cambia el passengerCount,
      * se debería ajustar el cupo del paquete (Lógica omitida por brevedad, pero recomendada).
@@ -138,6 +143,24 @@ public class BookingService {
             calculateFinalAmount(booking);
             return bookingRepository.save(booking);
         }).orElseThrow(() -> new RuntimeException("Booking not found"));
+    }
+
+    @Transactional
+    public void updateBookingStatus(Long id, BookingStatus newStatus) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada con ID: " + id));
+
+        // Regla de Negocio: Si se cancela, devolvemos los cupos al paquete
+        if (newStatus == BookingStatus.CANCELLED && booking.getStatus() != BookingStatus.CANCELLED) {
+            this.releaseSpots(booking);
+        }
+        // Regla de Negocio: Si se re-activa una cancelada, validamos stock
+        else if (booking.getStatus() == BookingStatus.CANCELLED && newStatus != BookingStatus.CANCELLED) {
+            this.reserveSpots(booking);
+        }
+
+        booking.setStatus(newStatus);
+        bookingRepository.save(booking);
     }
 
     public void deleteBooking(Long id) {
@@ -203,5 +226,19 @@ public class BookingService {
         booking.setFinalAmount(subtotal - booking.getTotalDiscount());
     }
 
+    private void releaseSpots(Booking booking) {
+        TravelPackage pkg = booking.getTravelPackage();
+        pkg.setAvailableSpots(pkg.getAvailableSpots() + booking.getPassengerCount());
+        travelPackageRepository.save(pkg);
+    }
+
+    private void reserveSpots(Booking booking) {
+        TravelPackage pkg = booking.getTravelPackage();
+        if (pkg.getAvailableSpots() < booking.getPassengerCount()) {
+            throw new RuntimeException("No hay cupos suficientes para reactivar esta reserva.");
+        }
+        pkg.setAvailableSpots(pkg.getAvailableSpots() - booking.getPassengerCount());
+        travelPackageRepository.save(pkg);
+    }
 
 }
