@@ -35,7 +35,7 @@ services:
       dockerfile: Dockerfile.nginx
     container_name: balanceador-de-carga
     ports:
-      - "8090:80"
+      - "8021:80"
     depends_on:
       - backend
 
