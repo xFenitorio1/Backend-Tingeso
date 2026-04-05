@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: tingeso
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -35,7 +35,7 @@ services:
       dockerfile: Dockerfile.nginx
     container_name: balanceador-de-carga
     ports:
-      - "8021:80"
+      - "8090:80"
     depends_on:
       - backend
 
