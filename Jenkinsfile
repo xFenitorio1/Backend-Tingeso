@@ -48,6 +48,8 @@ pipeline {
                         echo "--> Borrando la mierda esa <--"
                         sh "if [ -d nginx.conf ]; then rm -rf nginx.conf; fi"
 
+                        sh "ls -l"
+
                         echo "--> Levantando nueva versión..."
                         sh "docker-compose up -d --build"
                     }
