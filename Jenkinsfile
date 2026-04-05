@@ -51,7 +51,7 @@ pipeline {
                         sh "ls -l"
 
                         echo "--> Levantando nueva versión..."
-                        sh "docker-compose up -d --build"
+                        sh "docker-compose up -d --scale backend=3"
                     }
                 }
             }

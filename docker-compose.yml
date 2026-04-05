@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   database:
     image: postgres:15
@@ -7,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: tingeso
     ports:
-      - "5433:5432" # Mapeo corregido: puerto local 5433 al 5432 interno
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,8 +20,6 @@ services:
 
   backend:
     build: .
-    deploy:
-      replicas: 3
     depends_on:
       database:
         condition: service_healthy
@@ -29,15 +29,15 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
 
-nginx:
-  build:
-    context: .
-    dockerfile: Dockerfile.nginx
-  container_name: balanceador-de-carga
-  ports:
-    - "8021:80"
-  depends_on:
-    - backend
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: balanceador-de-carga
+    ports:
+      - "8021:80"
+    depends_on:
+      - backend
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
