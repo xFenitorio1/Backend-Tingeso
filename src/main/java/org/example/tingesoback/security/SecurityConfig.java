@@ -2,6 +2,7 @@ package org.example.tingesoback.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -37,7 +38,6 @@ public class SecurityConfig {
                         // Rutas de ADMIN
                         .requestMatchers("/api/bookings/admin/all").hasRole("ADMIN")
                         .requestMatchers("/api/bookings/{id}/status").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/bookings/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/packages/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/packages/{id}").hasRole("ADMIN")
@@ -49,9 +49,11 @@ public class SecurityConfig {
 
                         // Rutas PÚBLICAS
                         .requestMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
 
                         // RESTO requiere login
                         .anyRequest().authenticated()
+
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))

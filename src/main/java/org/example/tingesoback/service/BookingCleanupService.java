@@ -22,7 +22,7 @@ public class BookingCleanupService {
     @Autowired
     private TravelPackageRepository travelPackageRepository;
 
-    /*
+
     // Se ejecuta cada 5 minutos (300,000 milisegundos)
     @Scheduled(fixedRate = 300000)
     @Transactional
@@ -54,5 +54,4 @@ public class BookingCleanupService {
             System.out.println("RESUMEN: Reserva ID " + booking.getId() + " expirada. Cupos devueltos: " + booking.getPassengerCount() + ". Total paquete: " + nuevosCupos);
         }
     }
-     */
 }
