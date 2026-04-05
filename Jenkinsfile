@@ -46,7 +46,7 @@ pipeline {
                         sh "docker-compose down --remove-orphans"
 
                         echo "--> Borrando la mierda esa <--"
-                        sh "if [ -d nginx/nginx.conf ]; then rm -rf nginx/nginx.conf; fi"
+                        sh "if [ -d nginx.conf ]; then rm -rf nginx.conf; fi"
 
                         echo "--> Levantando nueva versión..."
                         sh "docker-compose up -d --build"
