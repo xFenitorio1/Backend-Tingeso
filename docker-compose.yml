@@ -34,7 +34,7 @@ services:
     image: nginx:latest
     container_name: load-balancer
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx:/etc/nginx/:ro
     ports:
       - "8021:80"
     depends_on:
