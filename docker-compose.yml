@@ -33,7 +33,7 @@ services:
     image: nginx:latest
     container_name: balanceador-de-carga
     volumes:
-      - ./nginx:/etc/nginx/conf.d/:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8021:80"
     depends_on:
