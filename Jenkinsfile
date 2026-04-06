@@ -51,7 +51,7 @@ pipeline {
                         echo "--> config del nginx"
                         sh "docker exec balanceador-de-carga nginx -T"
 
-                        echo "--> Esperando 20 segundos a que Keycloak inicie completamente..."
+                        echo "--> Esperando 90 segundos a que Keycloak inicie completamente..."
                         sh "sleep 90"
 
                         echo "--> Viendo si funciona el tema del keycloak"
