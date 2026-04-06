@@ -45,13 +45,10 @@ pipeline {
                         echo "--> Limpiando contenedores antiguos y liberando puertos..."
                         sh "docker-compose down --remove-orphans"
 
-                        echo "--> Borrando la mierda esa <--"
-                        sh "if [ -d nginx.conf ]; then rm -rf nginx.conf; fi"
-
-                        sh "ls -l"
-
                         echo "--> Levantando nueva versión..."
                         sh "docker-compose up -d --scale backend=3"
+
+                        sh "docker exec balanceador-de-carga nginx -T"
                     }
                 }
             }
