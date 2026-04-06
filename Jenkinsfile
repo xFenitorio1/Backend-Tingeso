@@ -46,8 +46,9 @@ pipeline {
                         sh "docker-compose down --remove-orphans"
 
                         echo "--> Levantando nueva versión..."
-                        sh "docker-compose up -d --scale backend=3"
+                        sh "docker-compose up -d --build --scale backend=3"
 
+                        echo "--> config del nginx"
                         sh "docker exec balanceador-de-carga nginx -T"
                     }
                 }
