@@ -50,6 +50,9 @@ pipeline {
 
                         echo "--> config del nginx"
                         sh "docker exec balanceador-de-carga nginx -T"
+
+                        echo "--> Viendo si funciona el tema del keycloak"
+                        sh "docker exec -it balanceador-de-carga curl http://keycloak:8080/realms/Tingeso/.well-known/openid-configuration"
                     }
                 }
             }
