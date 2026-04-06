@@ -38,6 +38,7 @@ services:
     ports:
       - "8021:80"
     depends_on:
+      - keycloak
       - backend
 
   keycloak:
