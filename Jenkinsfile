@@ -52,7 +52,7 @@ pipeline {
                         sh "docker exec balanceador-de-carga nginx -T"
 
                         echo "--> Esperando 20 segundos a que Keycloak inicie completamente..."
-                        sh "sleep 20"
+                        sh "sleep 90"
 
                         echo "--> Viendo si funciona el tema del keycloak"
                         sh "docker exec balanceador-de-carga curl http://keycloak:8080/realms/Tingeso/.well-known/openid-configuration"
