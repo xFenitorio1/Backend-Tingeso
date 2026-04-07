@@ -50,6 +50,7 @@ public class SecurityConfig {
                         // Rutas PÚBLICAS
                         .requestMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
+                        .requestMatchers("/api/payments").permitAll()
 
                         // RESTO requiere login
                         .anyRequest().authenticated()
