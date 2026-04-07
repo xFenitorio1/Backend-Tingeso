@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
                         .requestMatchers("/api/payments").permitAll()
+                        .requestMatchers("/api/bookings/my-bookings").permitAll()
 
                         // RESTO requiere login
                         .anyRequest().authenticated()
