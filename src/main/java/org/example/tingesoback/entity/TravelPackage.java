@@ -1,5 +1,6 @@
 package org.example.tingesoback.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.tingesoback.dto.PackageStatus;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TravelPackage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
