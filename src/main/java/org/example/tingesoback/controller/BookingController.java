@@ -81,24 +81,24 @@ public class    BookingController {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Condición 1: Histórico >= 3
-        long totalPagadas = bookingRepository.countByCustomerAndStatus(user, BookingStatus.PAID);
-        boolean porHistorico = totalPagadas >= 3;
+        // Condition 1: History >= 3
+        long totalPaid = bookingRepository.countByCustomerAndStatus(user, BookingStatus.PAID);
+        boolean perHistory = totalPaid >= 3;
 
-        // Condición 2: Recurrente < 30 días
-        LocalDateTime haceUnMes = LocalDateTime.now().minusDays(30);
-        boolean porRecurrencia = bookingRepository.existsByCustomerAndStatusAndCreatedAtAfter(
-                user, BookingStatus.PAID, haceUnMes
+        // Condition 2: Recurrent < 30 días
+        LocalDateTime aMonthAgo = LocalDateTime.now().minusDays(30);
+        boolean perRecurrent = bookingRepository.existsByCustomerAndStatusAndCreatedAtAfter(
+                user, BookingStatus.PAID, aMonthAgo
         );
-        // Condición 3: Revisar las promociones activas
+        // Condition 3: Check current promotions
         List<Promotion> activePromos = promotionRepository.findActivePromotions(LocalDateTime.now());
 
         Map<String, Object> response = new HashMap<>();
-        // qualifies es true si cumple CUALQUIERA de las dos
-        response.put("qualifies", porHistorico || porRecurrencia);
-        response.put("hasHistoryDiscount", porHistorico);
-        response.put("hasRecurrenceDiscount", porRecurrencia);
-        response.put("totalPaidBookings", totalPagadas);
+        // qualifies is true if it accomplish any of the two
+        response.put("qualifies", perHistory || perRecurrent);
+        response.put("hasHistoryDiscount", perHistory);
+        response.put("hasRecurrenceDiscount", perRecurrent);
+        response.put("totalPaidBookings", totalPaid);
         response.put("activePromotions", activePromos);
 
         return ResponseEntity.ok(response);

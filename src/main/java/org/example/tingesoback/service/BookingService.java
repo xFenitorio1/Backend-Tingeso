@@ -43,43 +43,43 @@ public class BookingService {
 
     @Transactional
     public BookingResponseDTO createBooking(Booking booking) {
-        // 1. Validar existencia del Cliente
+        // 1. Validate the existence of the Client
         if (booking.getCustomer() == null || booking.getCustomer().getId() == null) {
             throw new RuntimeException("ID de cliente es obligatorio");
         }
         User customer = userRepository.findById(booking.getCustomer().getId())
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
-        // 2. Validar existencia del Paquete
+        // 2. Validar the existence of the TravelPackage
         if (booking.getTravelPackage() == null || booking.getTravelPackage().getId() == null) {
             throw new RuntimeException("ID de paquete es obligatorio");
         }
         TravelPackage pkg = travelPackageRepository.findById(booking.getTravelPackage().getId())
                 .orElseThrow(() -> new RuntimeException("Paquete turístico no encontrado"));
 
-        // 3. REGLA: Validar disponibilidad de cupos
+        // 3. Validate if there are available slots
         if (pkg.getAvailableSpots() < booking.getPassengerCount()) {
             throw new RuntimeException("No hay cupos suficientes. Disponibles: " + pkg.getAvailableSpots());
         }
 
-        // 4. Configurar datos iniciales de la reserva
+        // 4. Configurate initial data of the Booking
         booking.setCustomer(customer);
         booking.setTravelPackage(pkg);
         booking.setBasePrice(pkg.getPrice());
         booking.setStatus(BookingStatus.PENDING_PAYMENT);
         booking.setCreatedAt(LocalDateTime.now());
 
-        // 5. Aplicar lógica de montos y descuentos (Cálculo Numérico)
+        // 5. Aplicate discount and final amount
         calculateFinalAmount(booking);
 
-        // 6. REGLA: Descontar cupos del paquete
+        // 6. Discount slots from the Travel Package
         pkg.setAvailableSpots(pkg.getAvailableSpots() - booking.getPassengerCount());
         travelPackageRepository.save(pkg);
 
-        // 7. Guardar Reserva en DB
+        // 7. Save Booking on the DB
         Booking savedBooking = bookingRepository.save(booking);
 
-        // 8. Construir DTO de respuesta con los detalles de descuento para el Front
+        // 8. Build DTO for details of the promos to send to Frontend
         return convertToDTO(savedBooking);
     }
 
@@ -111,7 +111,7 @@ public class BookingService {
             details.add("10% - Descuento por grupo (4 o más personas)");
         }
 
-        // Si el ahorro es mayor al 10%, significa que se sumó el de fidelidad
+        // If the savings are greater than 10%, it means that the loyalty bonus was added.
         if (booking.getTotalDiscount() > (subtotal * 0.10) + 1.0) {
             details.add("5% - Beneficio Cliente Frecuente (Viaje en los últimos 30 días)");
         }
@@ -130,16 +130,17 @@ public class BookingService {
         return bookingRepository.findAllBookingsForAdmin();
     }
 
+
     /**
-     * Actualiza una reserva. Nota: Si cambia el passengerCount,
-     * se debería ajustar el cupo del paquete (Lógica omitida por brevedad, pero recomendada).
+     * Update a reservation. Note: If the passenger count changes,
+     * the package capacity should be adjusted
      */
     public Booking updateBooking(Long id, Booking details) {
         return bookingRepository.findById(id).map(booking -> {
             booking.setPassengerCount(details.getPassengerCount());
             booking.setStatus(details.getStatus());
 
-            // Recalcular montos por si cambió la cantidad de pasajeros
+            // Recalculate amount if the number of passengers changed
             calculateFinalAmount(booking);
             return bookingRepository.save(booking);
         }).orElseThrow(() -> new RuntimeException("Booking not found"));
@@ -174,7 +175,7 @@ public class BookingService {
     }
 
     /**
-     * Lógica de Descuentos Acumulables
+     * Logic of Cumulative Discounts
      */
     private void calculateFinalAmount(Booking booking) {
         if (booking.getPassengerCount() == null || booking.getBasePrice() == null) return;

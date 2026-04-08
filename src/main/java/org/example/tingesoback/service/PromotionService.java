@@ -48,7 +48,6 @@ public class PromotionService {
 
         promotion.setActive(!promotion.isActive());
 
-        // 3. Guardar cambios
         return promotionRepository.save(promotion);
     }
 

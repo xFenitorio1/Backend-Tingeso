@@ -37,14 +37,14 @@ public class TravelPackageService {
 
     @Transactional
     public TravelPackage updatePackage(Long id, TravelPackage details) {
-        // 1. Buscamos el paquete actual en la BD
+        // 1. We look for the current package in the database
         TravelPackage existingPkg = travelPackageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("TravelPackage not found"));
 
-        // 2. Validamos las reglas de negocio comparando lo nuevo con lo actual
+        // 2. We validate the business rules by comparing the new with the current
         validateUpdateRules(details, existingPkg);
 
-        // 3. Actualizamos los campos
+        // 3. We update the fields
         existingPkg.setName(details.getName());
         existingPkg.setDestination(details.getDestination());
         existingPkg.setDescription(details.getDescription());
@@ -52,7 +52,7 @@ public class TravelPackageService {
         existingPkg.setEndDate(details.getEndDate());
         existingPkg.setPrice(details.getPrice());
 
-        // Ajuste de cupos: Si se cambia la capacidad total, debemos recalcular disponibles
+        // Quota adjustment: If the total capacity changes, we must recalculate available spaces
         int diff = details.getTotalCapacity() - existingPkg.getTotalCapacity();
         existingPkg.setTotalCapacity(details.getTotalCapacity());
         existingPkg.setAvailableSpots(existingPkg.getAvailableSpots() + diff);
@@ -66,7 +66,7 @@ public class TravelPackageService {
         travelPackageRepository.deleteById(id);
     }
 
-    // Validación para creación (Reglas generales)
+    // Validation for creation
     private void validateBusinessRules(TravelPackage pkg) {
         if (pkg.getPrice() != null && pkg.getPrice() <= 0) {
             throw new IllegalArgumentException("El precio debe ser mayor a 0");
@@ -79,21 +79,21 @@ public class TravelPackageService {
         }
     }
 
-    // Validación específica para actualización (Consistencia con reservas)
+    // Specific validation for update (Consistency with reservations)
     private void validateUpdateRules(TravelPackage newData, TravelPackage currentData) {
-        // Ejecutar validaciones generales primero
+        // Run general validations first
         validateBusinessRules(newData);
 
-        // Calcular cuántos cupos ya han sido reservados (Capacidad total - Disponibles)
+        // Calculate how many slots have already been reserved (Total Capacity - Available)
         int reservedSpots = currentData.getTotalCapacity() - currentData.getAvailableSpots();
 
-        // REGLA: No reducir capacidad total por debajo de lo ya reservado
+        // Do not reduce total capacity below what has already been reserved
         if (newData.getTotalCapacity() < reservedSpots) {
             throw new IllegalArgumentException("No se puede reducir la capacidad a " + newData.getTotalCapacity() +
                     " porque ya existen " + reservedSpots + " cupos reservados.");
         }
 
-        // REGLA: Si hay reservas, no permitir cambios de fechas base (Inicio)
+        // RULE: If there are reservations, do not allow changes to the base (Start) dates.
         if (reservedSpots > 0) {
             if (!newData.getStartDate().equals(currentData.getStartDate())) {
                 throw new IllegalArgumentException("No se puede modificar la fecha de inicio de un paquete que ya tiene reservas registradas.");

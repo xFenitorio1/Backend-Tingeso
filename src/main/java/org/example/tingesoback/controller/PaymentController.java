@@ -32,12 +32,12 @@ public class PaymentController {
             @RequestBody Payment payment,
             @AuthenticationPrincipal Jwt jwt) {
         try {
-            // 1. Validar que la reserva existe en el objeto Payment enviado
+            // 1. Validate if the booking exists on the Payment object
             if (payment.getBooking() == null || payment.getBooking().getId() == null) {
                 return ResponseEntity.badRequest().body("ID de reserva es obligatorio para el pago.");
             }
 
-            // 2. Seguridad: Verificar que la reserva pertenezca al usuario del Token JWT
+            // 2. Seguridad: Verificate that the booking belongs to the user JWT Token
             String email = jwt.getClaimAsString("email");
             Booking booking = bookingRepository.findById(payment.getBooking().getId())
                     .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
@@ -47,8 +47,8 @@ public class PaymentController {
                         .body("No tienes permiso para pagar esta reserva.");
             }
 
-            // 3. Procesar el pago a través del Service
-            // El service debería cambiar el estado de la reserva a 'PAID'
+            // 3. Process the Payment
+            // Service should change the Booking Status to "PAID"
             Payment processedPayment = paymentService.processPayment(payment);
 
             return ResponseEntity.ok(processedPayment);

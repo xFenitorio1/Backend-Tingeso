@@ -23,11 +23,11 @@ public class BookingCleanupService {
     private TravelPackageRepository travelPackageRepository;
 
 
-    // Se ejecuta cada 5 minutos (300,000 milisegundos)
+    // Execute every 5 minutes (300,000 miliseconds)
     @Scheduled(fixedRate = 300000)
     @Transactional
     public void releaseExpiredBookings() {
-        // Para la prueba: Considerar expiradas las creadas hace más de 1 minuto
+        // For testing: Considerate expired the one created > 1 minute
         LocalDateTime expirationThreshold = LocalDateTime.now().minusMinutes(1);
 
         System.out.println("--- Iniciando escaneo de reservas expiradas: " + LocalDateTime.now() + " ---");
@@ -41,13 +41,13 @@ public class BookingCleanupService {
         }
 
         for (Booking booking : expiredBookings) {
-            // 1. Devolver cupos
+            // 1. Return slots
             TravelPackage pkg = booking.getTravelPackage();
             int nuevosCupos = pkg.getAvailableSpots() + booking.getPassengerCount();
             pkg.setAvailableSpots(nuevosCupos);
             travelPackageRepository.save(pkg);
 
-            // 2. Marcar como CANCELADA
+            // 2. Mark as CANCELLED
             booking.setStatus(BookingStatus.CANCELLED);
             bookingRepository.save(booking);
 

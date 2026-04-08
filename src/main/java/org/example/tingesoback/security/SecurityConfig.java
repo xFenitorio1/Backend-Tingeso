@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas de ADMIN
+                        // ADMIN Routes
                         .requestMatchers("/api/bookings/admin/all").hasRole("ADMIN")
                         .requestMatchers("/api/bookings/{id}/status").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/bookings/{id}").hasRole("ADMIN")
@@ -47,13 +47,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/promotions/{id}").hasRole("ADMIN")
                         .requestMatchers("/api/reports/**").hasRole("ADMIN")
 
-                        // Rutas PÚBLICAS
+                        // PUBLIC Routes
                         .requestMatchers(HttpMethod.GET, "/api/packages/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
                         .requestMatchers("/api/payments").permitAll()
                         .requestMatchers("/api/bookings/my-bookings").permitAll()
 
-                        // RESTO requiere login
+                        // The rest needs login
                         .anyRequest().authenticated()
 
                 )
@@ -70,16 +70,16 @@ public class SecurityConfig {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            // 1. Obtenemos el objeto realm_access
+            // 1. We get the realm_access object
             Map<String, Object> realmAccess = jwt.getClaim("realm_access");
             if (realmAccess == null || !realmAccess.containsKey("roles")) {
                 return (Collection) Arrays.asList();
             }
 
-            // 2. Obtenemos la lista de roles dentro de realm_access
+            // 2. We get the list of roles on realm_acces
             Collection<String> roles = (Collection<String>) realmAccess.get("roles");
 
-            // 3. Los convertimos a GrantedAuthority con el prefijo ROLE_
+            // 3. We convert them to GrantedAuthority with "ROLE_" prefix
             return roles.stream()
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                     .collect(Collectors.toList());

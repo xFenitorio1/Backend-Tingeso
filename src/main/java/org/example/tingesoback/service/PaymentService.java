@@ -27,7 +27,7 @@ public class PaymentService {
     }
 
     public Payment processPayment(Payment payment) {
-        // 1. Validar y obtener la reserva completa desde la BD
+        // 1. Validate and obtain the complete reservation from the database
         if (payment.getBooking() == null || payment.getBooking().getId() == null) {
             throw new IllegalArgumentException("Se requiere el ID de la reserva");
         }
@@ -35,16 +35,16 @@ public class PaymentService {
         Booking booking = bookingRepository.findById(payment.getBooking().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Reserva no encontrada"));
 
-        // 2. REGLA 3.2.5: Validar que el monto coincida con el finalAmount de la reserva
+        // 2. Validate that the amount matches the final amount of the reservation
         if (Math.abs(payment.getAmount() - booking.getFinalAmount()) > 0.01) {
             throw new IllegalArgumentException("El monto debe ser exactamente: " + booking.getFinalAmount());
         }
 
-        // 3. REGLA 3.2.5: Actualizar el estado de la reserva a PAID/CONFIRMED
+        // 3. Update the reservation status to PAID/CONFIRMED
         booking.setStatus(BookingStatus.PAID);
         bookingRepository.save(booking);
 
-        // 4. "Hidratar" el objeto payment para que la respuesta JSON no tenga nulls
+        // 4. "Hydrate" the payment object so that the JSON response does not have nulls
         payment.setBooking(booking);
         if (payment.getPaymentDate() == null) {
             payment.setPaymentDate(LocalDateTime.now());
