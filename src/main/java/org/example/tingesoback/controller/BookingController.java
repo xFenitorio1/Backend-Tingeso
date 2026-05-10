@@ -133,4 +133,19 @@ public class    BookingController {
 
         return ResponseEntity.ok(bookingService.getBookingsByEmail(email));
     }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelMyBooking(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        try {
+            String email = jwt.getClaimAsString("email");
+            bookingService.cancelBookingAsCustomer(id, email);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Reserva cancelada exitosamente");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 }

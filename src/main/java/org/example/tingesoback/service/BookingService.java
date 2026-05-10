@@ -32,9 +32,9 @@ public class BookingService {
 
     @Autowired
     public BookingService(BookingRepository bookingRepository,
-                          UserRepository userRepository,
-                          TravelPackageRepository travelPackageRepository,
-                          PromotionRepository promotionRepository) {
+            UserRepository userRepository,
+            TravelPackageRepository travelPackageRepository,
+            PromotionRepository promotionRepository) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.travelPackageRepository = travelPackageRepository;
@@ -95,7 +95,6 @@ public class BookingService {
         return bookingRepository.findByCustomerEmail(email);
     }
 
-
     private BookingResponseDTO convertToDTO(Booking booking) {
         BookingResponseDTO dto = new BookingResponseDTO();
         dto.setId(booking.getId());
@@ -111,7 +110,8 @@ public class BookingService {
             details.add("10% - Descuento por grupo (4 o más personas)");
         }
 
-        // If the savings are greater than 10%, it means that the loyalty bonus was added.
+        // If the savings are greater than 10%, it means that the loyalty bonus was
+        // added.
         if (booking.getTotalDiscount() > (subtotal * 0.10) + 1.0) {
             details.add("5% - Beneficio Cliente Frecuente (Viaje en los últimos 30 días)");
         }
@@ -129,7 +129,6 @@ public class BookingService {
     public List<BookingAdminDTO> getAllBookingsForAdmin() {
         return bookingRepository.findAllBookingsForAdmin();
     }
-
 
     /**
      * Update a reservation. Note: If the passenger count changes,
@@ -164,8 +163,25 @@ public class BookingService {
         bookingRepository.save(booking);
     }
 
+    @Transactional
+    public void cancelBookingAsCustomer(Long id, String email) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada con ID: " + id));
+
+        if (!booking.getCustomer().getEmail().equals(email)) {
+            throw new RuntimeException("No tienes permiso para cancelar esta reserva");
+        }
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new RuntimeException("La reserva ya se encuentra cancelada");
+        }
+
+        this.releaseSpots(booking);
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+    }
+
     public void deleteBooking(Long id) {
-        // REGLA: Si se elimina/cancela, se deberían devolver los cupos al paquete
         bookingRepository.findById(id).ifPresent(booking -> {
             TravelPackage pkg = booking.getTravelPackage();
             pkg.setAvailableSpots(pkg.getAvailableSpots() + booking.getPassengerCount());
@@ -178,39 +194,39 @@ public class BookingService {
      * Logic of Cumulative Discounts
      */
     private void calculateFinalAmount(Booking booking) {
-        if (booking.getPassengerCount() == null || booking.getBasePrice() == null) return;
+        if (booking.getPassengerCount() == null || booking.getBasePrice() == null)
+            return;
 
         double subtotal = booking.getBasePrice() * booking.getPassengerCount();
         double discountPct = 0.0;
 
-        // 1. Descuento por grupo
+        // 1. Group Discount
         if (booking.getPassengerCount() >= 4) {
             discountPct += 0.10;
         }
 
-        // Buscamos si existen reservas PAGADAS del mismo cliente en los últimos 30 días
-        LocalDateTime haceUnMes = LocalDateTime.now().minusDays(30);
+        // We search if there are any paid bookings of the same customer in the last 30
+        // days
+        LocalDateTime monthAgo = LocalDateTime.now().minusDays(30);
 
-        long reservasPagadas = bookingRepository.countByCustomerAndStatus(
+        long paidBookings = bookingRepository.countByCustomerAndStatus(
                 booking.getCustomer(),
-                BookingStatus.PAID
-        );
-        if (reservasPagadas >= 3) {
-            discountPct += 0.05; // 5% de descuento por fidelidad
+                BookingStatus.PAID);
+        if (paidBookings >= 3) {
+            discountPct += 0.05; // 5% discount by fidelity
         }
 
-        //Descuento cliente frecuente
-        boolean esRecurrente = bookingRepository.existsByCustomerAndStatusAndCreatedAtAfter(
+        // Discount by frecuency
+        boolean isFrecuent = bookingRepository.existsByCustomerAndStatusAndCreatedAtAfter(
                 booking.getCustomer(),
                 BookingStatus.PAID,
-                haceUnMes
-        );
+                monthAgo);
 
-        if (esRecurrente) {
-            discountPct += 0.05; // 5% adicional por cliente recurrente
+        if (isFrecuent) {
+            discountPct += 0.05; // 5% discount for being frequent
         }
 
-        //Descuento por promoción
+        // Discount by promotion
         List<Promotion> activePromos = promotionRepository.findActivePromotions(LocalDateTime.now());
 
         for (Promotion promo : activePromos) {
@@ -241,7 +257,5 @@ public class BookingService {
         pkg.setAvailableSpots(pkg.getAvailableSpots() - booking.getPassengerCount());
         travelPackageRepository.save(pkg);
     }
-
-
 
 }
