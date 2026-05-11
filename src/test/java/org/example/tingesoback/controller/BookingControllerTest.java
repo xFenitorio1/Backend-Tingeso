@@ -242,4 +242,29 @@ class BookingControllerTest {
                         .with(jwt().jwt(j -> j.claim("email", "test@example.com")))) // Cambio aquí
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void cancelMyBooking_Success() throws Exception {
+        // No necesitamos mockear el retorno porque el service es void
+        doNothing().when(bookingService).cancelBookingAsCustomer(eq(1L), eq("test@example.com"));
+
+        mockMvc.perform(post("/api/bookings/1/cancel")
+                        .with(jwt().jwt(j -> j.claim("email", "test@example.com"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Reserva cancelada exitosamente"));
+
+        verify(bookingService).cancelBookingAsCustomer(1L, "test@example.com");
+    }
+
+    @Test
+    void cancelMyBooking_BusinessError_ReturnsBadRequest() throws Exception {
+        // Simulamos que el service lanza una excepción (ej: no es el dueño)
+        doThrow(new RuntimeException("No tienes permiso para cancelar esta reserva"))
+                .when(bookingService).cancelBookingAsCustomer(anyLong(), anyString());
+
+        mockMvc.perform(post("/api/bookings/1/cancel")
+                        .with(jwt().jwt(j -> j.claim("email", "test@example.com"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("No tienes permiso para cancelar esta reserva"));
+    }
 }

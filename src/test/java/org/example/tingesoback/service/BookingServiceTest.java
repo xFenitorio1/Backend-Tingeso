@@ -299,4 +299,60 @@ class BookingServiceTest {
         // 3. Verificación
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void cancelBookingAsCustomer_Success() {
+        // Setup
+        inputBooking.setId(1L);
+        inputBooking.setStatus(BookingStatus.PAID);
+        inputBooking.setPassengerCount(2);
+        mockPackage.setAvailableSpots(10);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(inputBooking));
+
+        // Ejecución
+        bookingService.cancelBookingAsCustomer(1L, "test@test.com");
+
+        // Verificaciones
+        assertEquals(BookingStatus.CANCELLED, inputBooking.getStatus());
+        assertEquals(12, mockPackage.getAvailableSpots()); // Liberó los 2 cupos
+        verify(bookingRepository).save(inputBooking);
+    }
+
+    @Test
+    void cancelBookingAsCustomer_WrongUser_ThrowsException() {
+        inputBooking.setId(1L);
+        // El dueño es test@test.com (definido en setUp)
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(inputBooking));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            bookingService.cancelBookingAsCustomer(1L, "hacker@example.com");
+        });
+
+        assertEquals("No tienes permiso para cancelar esta reserva", exception.getMessage());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void cancelBookingAsCustomer_AlreadyCancelled_ThrowsException() {
+        inputBooking.setId(1L);
+        inputBooking.setStatus(BookingStatus.CANCELLED);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(inputBooking));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            bookingService.cancelBookingAsCustomer(1L, "test@test.com");
+        });
+
+        assertEquals("La reserva ya se encuentra cancelada", exception.getMessage());
+    }
+
+    @Test
+    void cancelBookingAsCustomer_NotFound_ThrowsException() {
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> {
+            bookingService.cancelBookingAsCustomer(99L, "any@email.com");
+        });
+    }
 }
