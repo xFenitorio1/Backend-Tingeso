@@ -1,14 +1,8 @@
-name: Backend CI/CD
-
-on:
-  push:
-    branches: [ "main" ]
-
-jobs:
-  test:
+test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -16,23 +10,23 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
-      - name: Run Tests
+      - name: Run Tests with Coverage
         run: mvn test
 
-  build-and-push:
-    needs: test # Solo si pasan los tests se sube la imagen
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - name: Generate JaCoCo Badge
+        id: jacoco
+        uses: cicirello/jacoco-badge-generator@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          generate-branches-badge: true
+          jacoco-csv-file: target/site/jacoco/jacoco.csv
 
-      - name: Build and Push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/tingeso-backend:latest
+      - name: Log Coverage Percentage
+        run: |
+          echo "Coverage total: ${{ steps.jacoco.outputs.coverage }}"
+          echo "Branch Coverage total: ${{ steps.jacoco.outputs.branches }}"
+
+      - name: Add Coverage to Summary
+        run: |
+          echo "Reporte de Cobertura" >> $GITHUB_STEP_SUMMARY
+          echo "Instrucciones: ${{ steps.jacoco.outputs.coverage-percentage }}%" >> $GITHUB_STEP_SUMMARY
+          echo "Ramas (Branches): ${{ steps.jacoco.outputs.branches-percentage }}%" >> $GITHUB_STEP_SUMMARY
